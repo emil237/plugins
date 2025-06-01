@@ -7,7 +7,7 @@ PLUGIN_NAME="levi45-freeserver"
 URL="https://github.com/emil237/plugins/raw/refs/heads/main/levi45-freeserver/levi45-freeserver.tar.gz"
 DOWNLOAD_PATH="/var/volatile/tmp/$PLUGIN_NAME.tar.gz"
 
-# إزالة النسخة القديمة إن وُجدت
+# 
 if [ -d "$PLUGIN_DIR" ]; then
     echo "> Removing old $PLUGIN_NAME plugin, please wait..."
     rm -rf "$PLUGIN_DIR" > /dev/null 2>&1
@@ -21,7 +21,7 @@ if [ -d "$PLUGIN_DIR" ]; then
     echo "*******************************************"
 fi
 
-# التحقق من إصدار بايثون
+# 
 pyv="$(python -V 2>&1)"
 echo "$pyv"
 echo "Checking Dependencies"
@@ -74,7 +74,7 @@ else
     esac
 fi
 
-# تحميل وتثبيت البلجن
+# 
 echo "> Downloading $PLUGIN_NAME package, please wait..."
 sleep 1
 wget -O "$DOWNLOAD_PATH" --no-check-certificate "$URL"
@@ -92,5 +92,6 @@ else
 fi
 
 exit 0
+
 
 
