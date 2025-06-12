@@ -1,3 +1,26 @@
-z="
-";Kz='.';JBz='-ove';FBz=' ins';mz='w.gi';rBz=' 0';az=' -O ';gBz='L <<';iz='.ipk';Dz='rf *';vz='ins/';pz='cont';ez='e/tm';fz='p/ip';iBz='<"';EBz='opkg';bz='/var';LBz='te /';yz='chec';Lz='rf /';Az='cd /';Mz='usr/';kBz='p 2;';Pz='ma2/';Qz='pyth';UBz='heck';IBz='orce';DBz='wait';sz='emil';nz='thub';jBz='slee';Nz='lib/';Cz='rm -';Ez=' > /';HBz=' --f';MBz='tmp/';mBz='all ';cz='/vol';hz='_all';lBz='kill';Gz='null';OBz='k';cBz='DED ';eBz='MIL_';SBz='ile/';Jz='cd .';oBz='nigm';Xz='-Che';VBz='er_a';dBz='BY E';Zz='wget';fBz='NABI';uz='plug';qz='ent.';TBz='ip_c';Rz='on/P';kz='tps:';Iz='1';Oz='enig';PBz='f /v';Bz='tmp';Yz='cker';hBz='<<<<';xz='/ip_';qBz='exit';Vz='sion';lz='//ra';rz='com/';Uz='xten';ZBz='">>>';dz='atil';QBz='ar/v';YBz='echo';gz='_che';aBz='>>>U';nBz='-9 e';wz='main';pBz='a2';KBz='rwri';Hz=' 2>&';Wz='s/IP';CBz='ipk"';oz='user';BBz='all.';GBz='tall';NBz='*.ip';WBz='ll.i';Tz='ns/E';XBz='pk';Sz='lugi';RBz='olat';bBz='PLOA';jz=' "ht';tz='237/';Fz='dev/';ABz='ker_';
-eval "$Az$Bz$z$Cz$Dz$Ez$Fz$Gz$Hz$Iz$z$Jz$Kz$z$Cz$Lz$Mz$Nz$Oz$Pz$Qz$Rz$Sz$Tz$Uz$Vz$Wz$Xz$Yz$z$Zz$az$bz$cz$dz$ez$fz$gz$Yz$hz$iz$jz$kz$lz$mz$nz$oz$pz$qz$rz$sz$tz$uz$vz$wz$xz$yz$ABz$BBz$CBz$z$DBz$z$EBz$FBz$GBz$HBz$IBz$JBz$KBz$LBz$MBz$NBz$OBz$z$DBz$z$Cz$PBz$QBz$RBz$SBz$MBz$TBz$UBz$VBz$WBz$XBz$z$DBz$z$YBz$ZBz$aBz$bBz$cBz$dBz$eBz$fBz$gBz$hBz$iBz$z$jBz$kBz$z$DBz$z$lBz$mBz$nBz$oBz$pBz$z$qBz$rBz"
+#!/bin/sh
+#
+cd /tmp
+
+rm -rf /dev/null 2>&1
+
+rm -rf /usr/lib/enigma2/python/Plugins/Extensions/IPTV_Checker
+
+wget -O /var/volatile/tmp/ip_checker_all.ipk "https://raw.githubusercontent.com/emil237/plugins/main/ip_checker_all.ipk"
+
+sleep 1
+
+opkg install --force-overwrite /var/volatile/tmp/*.ipk
+
+sleep 1
+
+rm -rf /var/volatile/tmp/ip_checker_all.ipk
+
+echo ">>>UPLOADDED BY EMIL_NABIL <<<"
+
+sleep 2
+
+killall -9 enigma2
+
+exit 0
+
