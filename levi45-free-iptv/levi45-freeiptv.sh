@@ -10,16 +10,13 @@ PACKAGE_NAME="enigma2-plugin-extensions-levi45iptv"
 PLUGIN_NAME="levi45-free-iptv"
 URL="https://raw.githubusercontent.com/emil237/plugins/refs/heads/main/levi45-free-iptv"
 
-# التحقق من الإصدار القديم وإزالته
 if [ -d "$PLUGIN_DIR" ] || grep -q "$PACKAGE_NAME" "$STATUS_FILE" 2>/dev/null; then
     echo "> Removing old $PLUGIN_NAME plugin, please wait..."
     
-    # إزالة الحزمة أولاً إذا كانت مثبتة
     if grep -q "$PACKAGE_NAME" "$STATUS_FILE" 2>/dev/null; then
         opkg remove "$PACKAGE_NAME" > /dev/null 2>&1
     fi
     
-    # حذف المجلد المتبقي
     rm -rf "$PLUGIN_DIR" > /dev/null 2>&1
     
     echo "*******************************************"
@@ -27,7 +24,6 @@ if [ -d "$PLUGIN_DIR" ] || grep -q "$PACKAGE_NAME" "$STATUS_FILE" 2>/dev/null; t
     echo "*******************************************"
 fi
 
-# التحقق من إصدار Python
 if python3 --version >/dev/null 2>&1; then
     pyv="$(python3 -V 2>&1)"
 elif python --version >/dev/null 2>&1; then
@@ -40,7 +36,6 @@ echo "$pyv"
 echo "Checking Dependencies"
 echo ""
 
-# تثبيت الاعتماديات
 if [ -d /etc/opkg ]; then
     opkg update > /dev/null 2>&1
     if echo "$pyv" | grep -q "Python 3"; then
@@ -103,7 +98,6 @@ sleep 3
 echo ". >>>>         RESTARTING     <<<<"
 echo "**********************************************************************************"
 
-# إعادة تشغيل enigma2
 if command -v systemctl > /dev/null 2>&1; then
     systemctl restart enigma2 > /dev/null 2>&1
 elif command -v init > /dev/null 2>&1; then
