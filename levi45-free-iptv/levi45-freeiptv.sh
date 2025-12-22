@@ -8,66 +8,93 @@ PLUGIN_DIR="/usr/lib/enigma2/python/Plugins/Extensions/Levi45FreeIPTV"
 STATUS_FILE="/var/lib/opkg/status"
 PACKAGE_NAME="enigma2-plugin-extensions-levi45iptv"
 PLUGIN_NAME="levi45-free-iptv"
-URL="https://github.com/emil237/plugins/raw/refs/heads/main/levi45-free-iptv
+URL="https://raw.githubusercontent.com/emil237/plugins/refs/heads/main/levi45-free-iptv"
 
-if [ -d "$PLUGIN_DIR" ]; then
+# التحقق من الإصدار القديم وإزالته
+if [ -d "$PLUGIN_DIR" ] || grep -q "$PACKAGE_NAME" "$STATUS_FILE" 2>/dev/null; then
     echo "> Removing old $PLUGIN_NAME plugin, please wait..."
-    rm -rf "$PLUGIN_DIR" > /dev/null 2>&1
-
-    if grep -q "$PACKAGE_NAME" "$STATUS_FILE"; then
+    
+    # إزالة الحزمة أولاً إذا كانت مثبتة
+    if grep -q "$PACKAGE_NAME" "$STATUS_FILE" 2>/dev/null; then
         opkg remove "$PACKAGE_NAME" > /dev/null 2>&1
     fi
-
+    
+    # حذف المجلد المتبقي
+    rm -rf "$PLUGIN_DIR" > /dev/null 2>&1
+    
     echo "*******************************************"
     echo "* Removal Finished                        *"
     echo "*******************************************"
 fi
 
-pyv="$(python -V 2>&1)"
+# التحقق من إصدار Python
+if python3 --version >/dev/null 2>&1; then
+    pyv="$(python3 -V 2>&1)"
+elif python --version >/dev/null 2>&1; then
+    pyv="$(python -V 2>&1)"
+else
+    pyv="Python not found"
+fi
+
 echo "$pyv"
 echo "Checking Dependencies"
 echo ""
 
+# تثبيت الاعتماديات
 if [ -d /etc/opkg ]; then
-    opkg update
-    case "$pyv" in
-        *Python\ 3*) opkg install python3-requests ;;
-        *) opkg install python-requests ;;
-    esac
+    opkg update > /dev/null 2>&1
+    if echo "$pyv" | grep -q "Python 3"; then
+        opkg install python3-requests --force-depends > /dev/null 2>&1
+    else
+        opkg install python-requests --force-depends > /dev/null 2>&1
+    fi
 else
-    apt-get update
-    case "$pyv" in
-        *Python\ 3*) apt-get -y install python3-requests ;;
-        *) apt-get -y install python-requests ;;
-    esac
+    apt-get update > /dev/null 2>&1
+    if echo "$pyv" | grep -q "Python 3"; then
+        apt-get -y install python3-requests > /dev/null 2>&1
+    else
+        apt-get -y install python-requests > /dev/null 2>&1
+    fi
 fi
 
 echo "> Downloading $PLUGIN_NAME package, please wait..."
 cd $TEMPATH
 set -e
+INSTALL_OK=0
 
 if which dpkg > /dev/null 2>&1; then
+    echo "Using DEB package system..."
     wget -q "$URL/$MY_DEB"
-    if dpkg -i --force-overwrite $MY_DEB; then
-        apt-get install -f -y
+    if dpkg -i --force-overwrite "$MY_DEB" 2>/dev/null; then
+        apt-get install -f -y > /dev/null 2>&1
         INSTALL_OK=1
+    else
+        echo "DPKG installation failed"
     fi
-    rm -f $MY_DEB
+    rm -f "$MY_DEB" > /dev/null 2>&1
 else
+    echo "Using IPK package system..."
     wget -q "$URL/$MY_IPK"
-    if $OPKGINSTALL $MY_IPK; then
+    if $OPKGINSTALL "$MY_IPK" 2>/dev/null; then
         INSTALL_OK=1
+    else
+        echo "OPKG installation failed"
     fi
-    rm -f $MY_IPK
+    rm -f "$MY_IPK" > /dev/null 2>&1
 fi
 
 set +e
 cd ..
 
 if [ "$INSTALL_OK" = "1" ]; then
-    echo ">>>>  SUCCESSFULLY INSTALLED <<<<"
+    echo "*******************************************"
+    echo "*  SUCCESSFULLY INSTALLED                 *"
+    echo "*******************************************"
 else
-    echo "!!!! INSTALLATION FAILED !!!!"
+    echo "*******************************************"
+    echo "*  INSTALLATION FAILED                    *"
+    echo "*******************************************"
+    exit 1
 fi
 
 echo "********************************************************************************"
@@ -76,16 +103,14 @@ sleep 3
 echo ". >>>>         RESTARTING     <<<<"
 echo "**********************************************************************************"
 
+# إعادة تشغيل enigma2
 if command -v systemctl > /dev/null 2>&1; then
-    systemctl restart enigma2
-else
+    systemctl restart enigma2 > /dev/null 2>&1
+elif command -v init > /dev/null 2>&1; then
     init 4 && sleep 2 && init 3
+else
+    killall -9 enigma2 > /dev/null 2>&1
 fi
 
 exit 0
-
-
-
-
-
 
