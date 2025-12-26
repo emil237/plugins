@@ -1,129 +1,112 @@
 #!/bin/bash
 # ### wget -q --no-check-certificate https://github.com/emilnabil/neoboot/raw/refs/heads/main/neoboot-v9.84.sh -O - | /bin/sh
 #####################
-echo " SCRIPT : DOWNLOAD AND INSTALL NEOBOOT "
-# ###########################################
-NEOBOOT='v9.84'
-###########################################
-# Configure where we can find things here #
-MY_EM="*****************************************************************************************************"
-TMPDIR='/tmp'
-PLUGINPATH='/usr/lib/enigma2/python/Plugins/Extensions/NeoBoot'
-##########################################
-REQUIRED='/usr/lib/enigma2/python/Plugins/Extensions/NeoBoot/files'
-##########################################
-TOOLS='/usr/lib/enigma2/python/Tools'
-PREDION='/usr/lib/periodon'
-##########################################
-PYTHON_VERSION=$(python -c "import platform; print(platform.python_version())")
+echo "Removing previous version ..."
+sleep 2
 
-###########################################
-
-# remove old version
-if [ -d $PLUGINPATH ]; then
-   rm -rf $PLUGINPATH 
-fi
-
-# Python Version Check #
-if python --version 2>&1 | grep -q '^Python 3\.'; then
-   echo "You have Python3 image"
-   PYTHON='PY3'
+if [ -d "/usr/lib/enigma2/python/Plugins/Extensions/NeoBoot" ]; then
+    rm -rf "/usr/lib/enigma2/python/Plugins/Extensions/NeoBoot" > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        echo 'Package removed successfully.'
+    else
+        echo 'Failed to remove package.'
+        exit 1
+    fi
 else
-   echo "You have Python2 image"
-   PYTHON='PY2'
-fi
-#########################
-
-VERSION=$NEOBOOT
-
-#######################################
-if [ -f /etc/opkg/opkg.conf ]; then
-    STATUS='/var/lib/opkg/status'
-    OSTYPE='Opensource'
-    OPKG='opkg update'
-    OPKGINSTAL='opkg install --force-overwrite --force-reinstall'
-elif [ -f /etc/apt/apt.conf ]; then
-    STATUS='/var/lib/dpkg/status'
-    OSTYPE='DreamOS'
-    OPKG='apt-get update'
-    OPKGINSTAL='apt-get install'
+    echo "No previous version found."
 fi
 
-#########################
-case $(uname -m) in
-armv7l*) platform="armv7" ;;
-mips*) platform="mipsel" ;;
-aarch64*) platform="ARCH64" ;;
-sh4*) platform="sh4" ;;
-esac
+echo ""
+echo "Updating opkg package list..."
+opkg update > /dev/null 2>&1
+sleep 1
 
-#########################
-install() {
-    if ! grep -qs "Package: $1" $STATUS; then
-        $OPKG >/dev/null 2>&1
-        echo "   >>>>   Need to install $1   <<<<"
-        echo
-        if [ $OSTYPE = "Opensource" ]; then
-            $OPKGINSTAL "$1"
-            sleep 1
-            clear
+echo "Installing curl if not present..."
+if ! command -v curl &> /dev/null && ! command -v wget &> /dev/null; then
+    opkg install curl wget
+    if [ $? -ne 0 ]; then
+        echo "Failed to install curl/wget. Trying alternative..."
+        
+        opkg install curl || opkg install wget
+        if [ $? -ne 0 ]; then
+            echo "Failed to install download tools. Exiting."
+            exit 1
         fi
     fi
+else
+    echo "Download tools already installed."
+fi
+
+sleep 2
+
+cd /tmp || {
+    echo "Failed to change directory to /tmp"
+    exit 1
 }
 
-#########################
-if [ $PYTHON = "PY3" ]; then
-    for i in kernel-module-nandsim mtd-utils-jffs2 lzo python-setuptools util-linux-sfdisk packagegroup-base-nfs ofgwrite bzip2 mtd-utils mtd-utils-ubifs; do
-        install $i
-    done
+echo "Downloading NeoBoot package..."
+DOWNLOAD_URL="https://github.com/emil237/plugins/raw/refs/heads/main/neoboot/neoboot-v9.84.tar.gz"
+DOWNLOAD_FILE="/tmp/neoboot-v9.84.tar.gz"
+
+rm -f "$DOWNLOAD_FILE" > /dev/null 2>&1
+
+if command -v wget &> /dev/null; then
+    wget -O "$DOWNLOAD_FILE" "$DOWNLOAD_URL" --timeout=30 --tries=3
+    DOWNLOAD_RESULT=$?
+elif command -v curl &> /dev/null; then
+    curl -L "$DOWNLOAD_URL" -o "$DOWNLOAD_FILE" --connect-timeout 30 --retry 3
+    DOWNLOAD_RESULT=$?
 else
-    for i in kernel-module-nandsim mtd-utils-jffs2 lzo python-setuptools util-linux-sfdisk packagegroup-base-nfs ofgwrite bzip2 mtd-utils mtd-utils-ubifs; do
-        install $i
-    done
+    echo "No download tool available. Exiting."
+    exit 1
 fi
 
-#########################
-clear
-sleep 5
-opkg update
-echo "   UPLOADED BY  >>>>   EMIL_NABIL " 
-sleep 4
-echo "***********************************************************************"
-echo "***********************************************************************"
-
-cd /tmp
-set -e                                      
-wget -O /var/volatile/tmp/neoboot-v9.84.tar.gz "https://github.com/emilnabil/neoboot/raw/refs/heads/main/neoboot-v9.84.tar.gz"
-sleep 3
-tar -xzf neoboot-v9.84.tar.gz  -C /
-cd ..
-set +e
-rm -f /var/volatile/tmp/neoboot-v9.84.tar.gz
-
-#########################
-clear
-cd $PLUGINPATH
-chmod 755 ./bin/*
-chmod 755 ./ex_init.py
-chmod 755 ./files/*.sh
-chmod -R +x ./ubi_reader_arm/*
-chmod -R +x ./ubi_reader_mips/*
-
-#########################
-echo ""
-echo "***********************************************************************"
-echo $MY_EM                                                     
-echo "**                       NeoBoot  : $VERSION                          *"
-echo "**                                                                    *"
-echo "***********************************************************************"
-echo ". >>>>         RESTARING     <<<<"
-echo ""
-if [ $OSTYPE = 'DreamOS' ]; then
-    systemctl restart enigma2
-else
-    init 6
+if [ $DOWNLOAD_RESULT -ne 0 ]; then
+    echo "Download failed. Exiting."
+    rm -f "$DOWNLOAD_FILE" > /dev/null 2>&1
+    exit 1
 fi
+
+sleep 1
+
+if [ -f "$DOWNLOAD_FILE" ]; then
+    FILE_SIZE=$(stat -c%s "$DOWNLOAD_FILE" 2>/dev/null || wc -c < "$DOWNLOAD_FILE" 2>/dev/null)
+    if [ "$FILE_SIZE" -lt 1000 ]; then
+        echo "Downloaded file is too small (may be empty). Exiting."
+        rm -f "$DOWNLOAD_FILE"
+        exit 1
+    fi
+    
+    echo "Extracting package..."
+    tar -xzf "$DOWNLOAD_FILE" -C /
+    if [ $? -ne 0 ]; then
+        echo "Extraction failed. Exiting."
+        rm -f "$DOWNLOAD_FILE"
+        exit 1
+    fi
+else
+    echo "Downloaded file not found. Exiting."
+    exit 1
+fi
+
+echo ""
+echo ""
+sleep 1
+
+rm -f "$DOWNLOAD_FILE"
+echo "Cleaned up temporary files."
+
+echo ">>>>>>>>>> Uploaded By Emil Nabil <<<<<<<<<<"
+sleep 2
+
+if [ -d "/usr/lib/enigma2/python/Plugins/Extensions/NeoBoot" ]; then
+    echo "NeoBoot installation completed successfully!"
+    echo "Please restart enigma2 to complete installation."
+else
+    echo "Warning: Installation may not have completed correctly."
+    echo "Check if the directory exists: /usr/lib/enigma2/python/Plugins/Extensions/NeoBoot"
+fi
+reboot
 exit 0
-
 
 
