@@ -1,5 +1,5 @@
 #!/bin/bash
-# ### wget -q --no-check-certificate https://github.com/emilnabil/neoboot/raw/refs/heads/main/neoboot-v9.84.sh -O - | /bin/sh
+# ### wget -q --no-check-certificate https://github.com/emil237/plugins/raw/refs/heads/main/neoboot/neoboot-v9.84.sh -O - | /bin/sh
 #####################
 echo "Removing previous version ..."
 sleep 2
@@ -108,5 +108,6 @@ else
 fi
 reboot
 exit 0
+
 
 
